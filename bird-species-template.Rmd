@@ -10,18 +10,21 @@ output: html_notebook
 
 ```{r}
 # Load `tidyverse` and `dcData` packages
-
+library(tidyverse)
+library(dcData)
 
 
 
 # Load the `OrdwayBirds` data set into your RStudio environment from the `dcData` package
+
+data(OrdwayBirds)
 
 
 
 
 # Show a few commands used to inspect the data set a few different ways
 
-
+names(OrdwayBirds)
 
 ```
 
@@ -36,11 +39,13 @@ Before we begin, the book gives us some instructions to select a few key variabl
 ```{r}
 # Get the data table & clean up dates (see Data Computing eBook)
 
-
+OrdwayBirds <- OrdwayBirds %>%
+  select(SpeciesName, Month, Day) %>%
+  mutate(Month = as.character(Month), Day = as.character(Day), Month = as.numeric(Month), Day = as.numeric(Day))
 
 # Inspect resulting data
 
-
+names(OrdwayBirds)
 ```
 
 
@@ -52,10 +57,11 @@ Before we begin, the book gives us some instructions to select a few key variabl
 
 ```{r}
 # unique species in original data (including mis-spellings)
-
+unique_species_original<-unique(OrdwayBirds$SpeciesName)
 
 
 # unique species in the clean list
+unique_species_clean <- unique(OrdwayBirds$SpeciesName)
 
 
 
@@ -70,15 +76,16 @@ Before we begin, the book gives us some instructions to select a few key variabl
 ```{r}
 # inspect OrdwaySpeciesNames
 
+names(OrdwaySpeciesNames)
+
 
 # inner join
 
-
-
+new_data<-inner_join(OrdwayBirds,OrdwaySpeciesNames, by="SpeciesName")
 
 # inspect the data after the join
 
-
+names(new_data)
 ```
 
 
@@ -89,14 +96,24 @@ We want to identify the top 5-6 bird species sighted at the Katherine Ordway Nat
 ```{r}
 # count sightings by species in descending order
 
+count_species<-table(new_data$SpeciesName)
+count_species<-sort(count_species,decreasing=TRUE)
+
 
 
 
 # a hint in the text book recommends displaying the top 10 species to choose our threshold
 
+top_ten<-head(count_species,10)
+
+
 
 
 # define a sightings threshold; produce a table with only birds belonging to major species
+
+major<-count_species[count_species>=100]
+
+major_tbl<-data.frame(SpeciesName=names(major),Count=major)
 
 
 
@@ -111,6 +128,9 @@ We now want to produce a month-by-month count for each of the major species, and
 ```{r}
 # prepare glyph-ready data table called `ByMonth`
 
+ByMonth<-aggregare(new_data$SpeciesName,by=list(Month=new_data$Month),FUN=length)
+colnames(ByMonth)<-c("Month","Count")
+ByMonth<-ByMonth[order(ByMonth$Month)]
 
 
 ```
@@ -123,17 +143,20 @@ Now use the ggplot template below to generate the desired graph. (Remark you can
 # ggplot commands
 
 ByMonth %>% 
-  ggplot(aes(x = Month, y = count, color = Species)) + 
-  geom_line()
+  ggplot(aes(x = Month, y = count, color = Month)) + 
+  geom_line()+labs(x = "Month", y = "Count", fill = "Month")
 
-ByMonth %>% ggplot(aes(x=Month,y=count ,fill=Species)) +
-  geom_bar(stat='identity',position='stack', width=.9) 
+ByMonth %>% ggplot(aes(x=Month,y=count ,fill=Month)) +
+  geom_bar(stat='identity',position='stack', width=.9)+
+  labs(x = "Month", y = "Count", fill = "Month") 
 
 ```
 
 According to the graph, we can answer the questions posed:
 
 ##### 1. Which species are present year-round?  
+
+
 
 
 
